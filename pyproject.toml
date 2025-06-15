@@ -1,0 +1,21 @@
+[project]
+name = "yapper"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Shravan Asati",email = "dev.shravan@protonmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv (>=1.1.0,<2.0.0)",
+    "google-genai (>=1.20.0,<2.0.0)",
+    "pydantic (>=2.11.7,<3.0.0)",
+    "yt-dlp (>=2025.6.9,<2026.0.0)",
+    "srt (>=3.5.3,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
