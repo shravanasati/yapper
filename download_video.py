@@ -1,9 +1,7 @@
-import os
 from yt_dlp import YoutubeDL
 
 
-def download_video(video_url: str, out_filename: str):
-    out_path = os.path.join("./input", out_filename)
+def download_video(video_url: str, out_path: str):
     ydl_opts = {
         "format": "bestvideo+bestaudio/best",
         "outtmpl": out_path,

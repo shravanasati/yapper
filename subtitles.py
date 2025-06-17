@@ -1,7 +1,8 @@
-from datetime import timedelta
 import os
-import srt
 import re
+from datetime import timedelta
+
+import srt
 from yt_dlp import YoutubeDL
 
 

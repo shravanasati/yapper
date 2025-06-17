@@ -139,6 +139,7 @@ cython_debug/
 input/
 output/
 gameplays/
-highlights.json
-subs.srt
+out.mp4
+highlights_*.json
+subs_*.srt
 cookies.txt
