@@ -108,10 +108,10 @@ if __name__ == "__main__":
         print("==> Downloading video...")
         download_video(VIDEO_URL, INPUT_VID_WO_EXT)
 
+    os.makedirs(OUTPUT_VIDS_PATH, exist_ok=True)
     if len([f for f in os.listdir(OUTPUT_VIDS_PATH) if f.endswith(".mp4")]) > 0:
         print("==> Skipping video generation as output folder is already populated.")
     else:
-        os.makedirs(OUTPUT_VIDS_PATH, exist_ok=True)
         with ProcessPoolExecutor(
             max_workers=min(MAX_VIDEO_WORKERS, len(flattened_segments))
         ) as pool:
