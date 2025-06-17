@@ -12,6 +12,8 @@ For running you need a
 	yt-dlp --cookies-from-browser firefox --cookies cookies.txt
 	```
 
+- `client_secrets.json` from Google Cloud Console, create project > enable youtube data API v3 > OAuth Consent screen > create OAuth Client for desktop > download JSON credentials.
+
 - dependencies
 	```
 	poetry install
@@ -20,4 +22,4 @@ For running you need a
 - run the script
 	```
 	python main.py
-	````
+	```

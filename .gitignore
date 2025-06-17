@@ -142,4 +142,7 @@ gameplays/
 out.mp4
 highlights_*.json
 subs_*.srt
+published_*.txt
 cookies.txt
+token.pickle
+client_secrets.json
