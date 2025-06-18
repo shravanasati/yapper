@@ -7,7 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from urllib.parse import urlparse
 
 from download_video import download_video
-from highlights import HighlightExtractor, IDHighlightSegment
+from highlights import HighlightExtractor, IDHighlightSegment, obey_valid_length
 from publish import upload_short
 from subtitles import chunk_subtitles, download_subtitles, srt_time_to_seconds
 from video_gen import generate_short_clip
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         ) as pool:
             segments = list(pool.map(he.extract, subtitle_chunks))
 
-    flattened_segments = [s for ss in segments for s in ss]
+    flattened_segments = [s for ss in segments for s in ss if obey_valid_length(s)]
     print(f"==> Found {len(flattened_segments)} segments.")
     with open(HIGHLIGHTS_FILE, "w") as f:
         f.write(json.dumps([fs.model_dump() for fs in flattened_segments]))

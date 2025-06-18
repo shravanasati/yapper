@@ -1,10 +1,14 @@
 import secrets
 import string
+import time
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai.errors import ClientError
 from google.genai import types
 from pydantic import BaseModel
+
+from subtitles import srt_time_to_seconds
 
 
 def _generate_id(length: int = 8) -> str:
@@ -20,6 +24,20 @@ class HighlightSegment(BaseModel):
 
 class IDHighlightSegment(HighlightSegment):
     id_: str
+
+
+def obey_valid_length(segment: IDHighlightSegment) -> bool:
+    """
+    Predicate function to check whether the segment obeys valid short duration. 
+
+    10s is too short, and 3 mins is YT's defined limit for a short.
+    """
+    start = srt_time_to_seconds(segment.start_time)
+    end = srt_time_to_seconds(segment.end_time)
+    duration = end - start
+    max_video_len = 60 * 3  # 3 mins
+    min_video_len = 10
+    return min_video_len <= duration <= max_video_len
 
 
 load_dotenv()
@@ -54,21 +72,41 @@ class HighlightExtractor:
 
     def extract(self, subtitle_chunk: str) -> list[IDHighlightSegment]:
         print("Extracting highlights from subtitle chunk...")
-        response = self.client.models.generate_content(
-            model="gemini-2.5-flash-preview-05-20",
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_MESSAGE,
-                temperature=1,
-                response_mime_type="application/json",
-                response_schema=list[HighlightSegment],
-            ),
-            contents=subtitle_chunk,
-        )
+        retries = 5
+        delay = 15  # seconds
 
-        segments: list[HighlightSegment] = response.parsed
-        return [
-            IDHighlightSegment(id_=_generate_id(), **s.model_dump()) for s in segments
-        ]
+        for i in range(retries):
+            try:
+                response = self.client.models.generate_content(
+                    model="gemini-2.5-flash-preview-05-20",
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_MESSAGE,
+                        temperature=1,
+                        response_mime_type="application/json",
+                        response_schema=list[HighlightSegment],
+                    ),
+                    contents=subtitle_chunk,
+                )
+
+                segments: list[HighlightSegment] = response.parsed
+                return [
+                    IDHighlightSegment(id_=_generate_id(), **s.model_dump())
+                    for s in segments
+                ]
+            except ClientError as e:
+                if not e.code == 429:
+                    # only handle rate limit errors
+                    raise e
+                if i < retries - 1:
+                    print(
+                        f"Rate limit exceeded. Retrying in {delay} seconds... ({i + 1}/{retries})"
+                    )
+                    time.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    print("Max retries reached. Failed to extract highlights.")
+                    raise e
+        return []
 
 
 if __name__ == "__main__":
