@@ -4,8 +4,8 @@ import time
 
 from dotenv import load_dotenv
 from google import genai
-from google.genai.errors import ClientError
 from google.genai import types
+from google.genai.errors import ClientError
 from pydantic import BaseModel
 
 from subtitles import srt_time_to_seconds
@@ -28,7 +28,7 @@ class IDHighlightSegment(HighlightSegment):
 
 def obey_valid_length(segment: IDHighlightSegment) -> bool:
     """
-    Predicate function to check whether the segment obeys valid short duration. 
+    Predicate function to check whether the segment obeys valid short duration.
 
     10s is too short, and 3 mins is YT's defined limit for a short.
     """

@@ -1,5 +1,6 @@
 import os
 import pickle
+
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -22,7 +23,12 @@ def get_authenticated_service():
     return build("youtube", "v3", credentials=creds)
 
 
-def upload_short(video_path: str, title: str, description: str, tags=["shorts", "podcast", "viral", "funny"]):
+def upload_short(
+    video_path: str,
+    title: str,
+    description: str,
+    tags=["shorts", "podcast", "viral", "funny"],
+):
     youtube = get_authenticated_service()
 
     request_body = {
@@ -38,9 +44,7 @@ def upload_short(video_path: str, title: str, description: str, tags=["shorts", 
         },
     }
 
-    media = MediaFileUpload(
-        video_path, resumable=True, mimetype="video/*"
-    )
+    media = MediaFileUpload(video_path, resumable=True, mimetype="video/*")
 
     request = youtube.videos().insert(
         part="snippet,status", body=request_body, media_body=media
