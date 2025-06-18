@@ -13,10 +13,6 @@ from subtitles import chunk_subtitles, download_subtitles, srt_time_to_seconds
 from video_gen import generate_short_clip
 
 GAMEPLAYS_PATH = "./gameplays"
-# todo make all these input and output paths video id specific
-INPUT_VID_PATH = os.path.join("./input", "clip.webm")
-INPUT_VID_WO_EXT = os.path.join("./input", "clip")
-OUTPUT_VIDS_PATH = "./output"
 
 MAX_HIGHLIGHT_WORKERS = 10
 MAX_VIDEO_WORKERS = 4
@@ -68,6 +64,12 @@ if __name__ == "__main__":
     VIDEO_ID = get_yt_video_id(VIDEO_URL)
     print(f"==> Processing video with {VIDEO_ID=}...")
     NO_AUTO_SUBS = "--no-auto-subs" in sys.argv
+
+    vid_name = f"clip_{VIDEO_ID}"
+    INPUT_VID_PATH = os.path.join("./input", f"{vid_name}.webm")
+    INPUT_VID_WO_EXT = os.path.join("./input", vid_name)
+
+    OUTPUT_VIDS_PATH = f"./output/{VIDEO_ID}"
 
     SUBTITLES_FILE = f"subs_{VIDEO_ID}.srt"
     HIGHLIGHTS_FILE = f"highlights_{VIDEO_ID}.json"
