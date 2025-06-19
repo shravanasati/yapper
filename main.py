@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import shutil
 import sys
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
@@ -9,10 +8,13 @@ from urllib.parse import urlparse
 from download_video import download_video
 from highlights import HighlightExtractor, IDHighlightSegment, obey_valid_length
 from publish import upload_short
-from subtitles import chunk_subtitles, download_subtitles, srt_time_to_seconds
-from video_gen import generate_short_clip
+from subtitles import chunk_subtitles, download_subtitles
+from video_gen import ShortGenerator
 
 GAMEPLAYS_PATH = "./gameplays"
+INPUT_VID_PATH = ""
+INPUT_VID_WO_EXT = ""
+OUTPUT_VIDS_DIR = ""
 
 MAX_HIGHLIGHT_WORKERS = 10
 MAX_VIDEO_WORKERS = 4
@@ -31,21 +33,10 @@ def get_yt_video_id(url: str) -> str:
     return query_params["v"]
 
 
-def generate_short(segment: IDHighlightSegment):
-    print(f"==> Generating clip for {segment.title}")
-    generate_short_clip(
-        INPUT_VID_PATH,
-        os.path.join(GAMEPLAYS_PATH, random.choice(os.listdir(GAMEPLAYS_PATH))),
-        os.path.join(OUTPUT_VIDS_PATH, f"out_{segment.id_}.mp4"),
-        srt_time_to_seconds(segment.start_time),
-        srt_time_to_seconds(segment.end_time),
-    )
-
-
 def publish_short(segment: IDHighlightSegment):
     try:
         print(f"==> Uploading short {segment.title}")
-        video_path = os.path.join(OUTPUT_VIDS_PATH, f"out_{segment.id_}.mp4")
+        video_path = os.path.join(OUTPUT_VIDS_DIR, f"out_{segment.id_}.mp4")
         if not os.path.exists(video_path):
             print(f"==> ERROR: {video_path=} doesn't exist")
             return
@@ -67,9 +58,10 @@ if __name__ == "__main__":
 
     vid_name = f"clip_{VIDEO_ID}"
     INPUT_VID_PATH = os.path.join("./input", f"{vid_name}.webm")
+    globals()["INPUT_VID_PATH"] = INPUT_VID_PATH
     INPUT_VID_WO_EXT = os.path.join("./input", vid_name)
 
-    OUTPUT_VIDS_PATH = f"./output/{VIDEO_ID}"
+    OUTPUT_VIDS_DIR = os.path.join("./output", VIDEO_ID)
 
     SUBTITLES_FILE = f"subs_{VIDEO_ID}.srt"
     HIGHLIGHTS_FILE = f"highlights_{VIDEO_ID}.json"
@@ -110,14 +102,15 @@ if __name__ == "__main__":
         print("==> Downloading video...")
         download_video(VIDEO_URL, INPUT_VID_WO_EXT)
 
-    os.makedirs(OUTPUT_VIDS_PATH, exist_ok=True)
-    if len([f for f in os.listdir(OUTPUT_VIDS_PATH) if f.endswith(".mp4")]) > 0:
+    os.makedirs(OUTPUT_VIDS_DIR, exist_ok=True)
+    if len([f for f in os.listdir(OUTPUT_VIDS_DIR) if f.endswith(".mp4")]) > 0:
         print("==> Skipping video generation as output folder is already populated.")
     else:
+        short_gen = ShortGenerator(INPUT_VID_PATH, GAMEPLAYS_PATH, OUTPUT_VIDS_DIR)
         with ProcessPoolExecutor(
             max_workers=min(MAX_VIDEO_WORKERS, len(flattened_segments))
         ) as pool:
-            pool.map(generate_short, flattened_segments)
+            pool.map(short_gen.generate_short_clip, flattened_segments)
 
     published_segment_ids: set[str]
     if os.path.exists(PUBLISHED_VIDS_FILE):
@@ -134,7 +127,7 @@ if __name__ == "__main__":
         os.remove(HIGHLIGHTS_FILE)
         os.remove(PUBLISHED_VIDS_FILE)
         os.remove(INPUT_VID_PATH)
-        shutil.rmtree(OUTPUT_VIDS_PATH)
+        shutil.rmtree(OUTPUT_VIDS_DIR)
         exit(0)
 
     segments_to_upload = [
